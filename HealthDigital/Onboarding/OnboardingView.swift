@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-/// Multi-step onboarding flow shown on first launch.
+/// Multi-step onboarding flow shown on first launch, in a native macOS setup-assistant style.
 /// Collects name, age, gender, body metrics, activity level, daily step goal,
 /// motivations, a personal avatar and reminder preferences.
 struct OnboardingView: View {
@@ -32,63 +32,17 @@ struct OnboardingView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if step.showsProgress {
-                progressBar
-                    .padding(.horizontal, 24)
-                    .padding(.top, 12)
-            }
+            stepContent
+                .frame(maxWidth: 620)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .id(step)
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.2), value: step)
 
-            // Active step content, cross-fading/sliding on navigation.
-            ZStack {
-                stepContent
-                    .padding(.horizontal, 24)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                    .clipped()
-                    .id(step)
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .trailing).combined(with: .opacity),
-                        removal: .move(edge: .leading).combined(with: .opacity)
-                    ))
-            }
-            .animation(.snappy, value: step)
-
+            Divider()
             bottomBar
-                .padding(.horizontal, 24)
-                .padding(.bottom, 12)
         }
-        .background(
-            OnboardingStyle.backgroundGradient
-                .ignoresSafeArea()
-        )
-        .background(Color(nsColor: .underPageBackgroundColor).ignoresSafeArea())
-    }
-
-    // MARK: - Progress
-
-    private var progressFraction: Double {
-        let total = Step.allCases.count - 1
-        return total > 0 ? Double(step.rawValue) / Double(total) : 0
-    }
-
-    private var progressBar: some View {
-        VStack(alignment: .trailing, spacing: 6) {
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Color.orange.opacity(0.15))
-                    Capsule()
-                        .fill(OnboardingStyle.accentGradient)
-                        .frame(width: max(8, geometry.size.width * progressFraction))
-                }
-            }
-            .frame(height: 6)
-
-            Text("Step \(step.rawValue) of \(Step.allCases.count - 1)")
-                .font(.caption2.weight(.medium))
-                .foregroundStyle(.secondary)
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Onboarding progress")
-        .accessibilityValue("Step \(step.rawValue) of \(Step.allCases.count - 1)")
+        .frame(minWidth: 680, minHeight: 640)
     }
 
     // MARK: - Content
@@ -96,24 +50,17 @@ struct OnboardingView: View {
     @ViewBuilder
     private var stepContent: some View {
         switch step {
-        case .welcome:
-            WelcomeStep()
-        case .aboutYou:
-            AboutYouStep(profile: $profile)
-        case .bodyMetrics:
-            BodyMetricsStep(profile: $profile)
-        case .stepGoal:
-            StepGoalStep(profile: $profile)
-        case .motivation:
-            MotivationStep(profile: $profile)
-        case .reminders:
-            RemindersStep(profile: $profile)
-        case .summary:
-            SummaryStep(profile: $profile)
+        case .welcome: WelcomeStep()
+        case .aboutYou: AboutYouStep(profile: $profile)
+        case .bodyMetrics: BodyMetricsStep(profile: $profile)
+        case .stepGoal: StepGoalStep(profile: $profile)
+        case .motivation: MotivationStep(profile: $profile)
+        case .reminders: RemindersStep(profile: $profile)
+        case .summary: SummaryStep(profile: $profile)
         }
     }
 
-    // MARK: - Bottom bar (back / primary action)
+    // MARK: - Bottom bar (progress, back, primary action)
 
     private var canContinue: Bool {
         // Name is the only required field in the flow.
@@ -123,70 +70,49 @@ struct OnboardingView: View {
     private var primaryLabel: String {
         switch step {
         case .welcome: "Get Started"
-        case .summary: "Let's Go!"
+        case .summary: "Start Using Step Hub"
         default: "Continue"
         }
     }
 
-    private var primaryIcon: String? {
-        switch step {
-        case .welcome: "arrow.right"
-        case .summary: "shoeprints.fill"
-        default: nil
-        }
-    }
-
     private var bottomBar: some View {
-        HStack(spacing: 12) {
-            if step != .welcome {
-                Button {
-                    navigate(to: Step(rawValue: step.rawValue - 1) ?? .welcome)
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.body.weight(.semibold))
-                        .frame(width: 52, height: 52)
-                        .background(Color(nsColor: .controlBackgroundColor), in: Circle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Back")
-            }
-
-            Button(action: primaryAction) {
-                HStack(spacing: 8) {
-                    Text(primaryLabel)
-                        .font(.headline)
-                    if let primaryIcon {
-                        Image(systemName: primaryIcon)
-                            .font(.headline)
+        HStack(spacing: 10) {
+            if step.showsProgress {
+                HStack(spacing: 6) {
+                    ForEach(1..<Step.allCases.count, id: \.self) { index in
+                        Capsule()
+                            .fill(index == step.rawValue ? Color.accentColor : Color.secondary.opacity(0.3))
+                            .frame(width: index == step.rawValue ? 18 : 6, height: 6)
                     }
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 52)
-                .background(
-                    canContinue
-                        ? AnyShapeStyle(OnboardingStyle.accentGradient)
-                        : AnyShapeStyle(Color(.quaternarySystemFill)),
-                    in: Capsule()
-                )
-                .foregroundStyle(canContinue ? Color.white : Color(nsColor: .secondaryLabelColor))
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Onboarding progress")
+                .accessibilityValue("Step \(step.rawValue) of \(Step.allCases.count - 1)")
+                Text("Step \(step.rawValue) of \(Step.allCases.count - 1)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
-            .buttonStyle(.plain)
-            .disabled(!canContinue)
+            Spacer()
+            if step != .welcome {
+                Button("Back") { navigate(by: -1) }
+                    .keyboardShortcut(.cancelAction)
+            }
+            Button(primaryLabel, action: primaryAction)
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
+                .disabled(!canContinue)
         }
-        .safeAreaPadding(.bottom, 8)
+        .controlSize(.large)
+        .padding(.horizontal, 20)
+        .frame(height: 60)
     }
 
     private func primaryAction() {
-        switch step {
-        case .summary:
-            finishOnboarding()
-        default:
-            navigate(to: Step(rawValue: step.rawValue + 1) ?? .summary)
-        }
+        if step == .summary { finishOnboarding() } else { navigate(by: 1) }
     }
 
-    private func navigate(to newStep: Step) {
-        withAnimation(.snappy) { step = newStep }
+    private func navigate(by delta: Int) {
+        step = Step(rawValue: step.rawValue + delta) ?? step
     }
 
     private func finishOnboarding() {
@@ -201,7 +127,9 @@ struct OnboardingView: View {
             motivations: profile.motivations,
             avatarEmoji: profile.avatarEmoji,
             reminderEnabled: profile.reminderEnabled,
-            reminderTime: profile.reminderTime
+            reminderTime: profile.reminderTime,
+            reminderDays: profile.reminderDays,
+            suggestedActivities: profile.suggestedActivities
         )
         OnboardingPersistence.save(trimmed)
         hasCompletedOnboarding = true
