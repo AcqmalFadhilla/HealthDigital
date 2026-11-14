@@ -37,7 +37,7 @@ final class ReminderScheduler: NSObject, UNUserNotificationCenterDelegate {
     }
 
     /// Replaces pending reminders with one per active day for the next week.
-    func reschedule(profile: UserProfile, session: ActivitySession, now: Date = Date()) {
+    func reschedule(profile: OnboardingProfile, session: ActivitySession, now: Date = Date()) {
         let calendar = Calendar.current
         var requests: [UNNotificationRequest] = []
         for dayOffset in 0..<7 where profile.reminder.isEnabled {
@@ -51,7 +51,7 @@ final class ReminderScheduler: NSObject, UNUserNotificationCenterDelegate {
             let offset = isToday ? session.activityOffset : 0
             let content = UNMutableNotificationContent()
             content.title = "Time to move"
-            if let activity = StepActivity.activity(for: day, from: profile.activities, offset: offset, calendar: calendar) {
+            if let activity = SuggestedActivity.activity(for: day, from: profile.activities, offset: offset, calendar: calendar) {
                 content.body = "\(activity.prompt). \(activity.estimateLabel)."
             } else {
                 content.body = "Stand up and stretch for a few minutes."

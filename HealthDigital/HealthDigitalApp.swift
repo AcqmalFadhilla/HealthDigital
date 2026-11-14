@@ -13,7 +13,7 @@ struct HealthDigitalApp: App {
 
     var body: some Scene {
         Window("Step Hub", id: "main") {
-            RootView()
+            ContentView()
                 .environment(model)
         }
         .defaultSize(width: 1100, height: 780)

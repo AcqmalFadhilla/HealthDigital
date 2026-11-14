@@ -13,10 +13,10 @@ import Observation
 final class AppModel {
     // MARK: Stored state
 
-    var profile: UserProfile {
+    /// The profile collected by onboarding (Onboarding/OnboardingProfile.swift). Settings edits it.
+    var profile: OnboardingProfile {
         didSet {
-            guard profile != oldValue else { return }
-            Persistence.save(profile)
+            OnboardingPersistence.save(profile)
             rescheduleReminders()
             recompute()
         }
@@ -30,9 +30,8 @@ final class AppModel {
         }
     }
 
-    var hasOnboarded: Bool {
-        didSet { Persistence.hasOnboarded = hasOnboarded }
-    }
+    /// Mirrors the onboarding flow's completed flag (set by OnboardingView).
+    private(set) var hasOnboarded: Bool
 
     var session: ActivitySession {
         didSet { Persistence.save(session) }
@@ -65,9 +64,9 @@ final class AppModel {
     init(dataSource: StepDataSource? = nil) {
         let dataSource = dataSource ?? SampleStepDataSource()
         self.dataSource = dataSource
-        self.profile = Persistence.loadProfile()
+        self.profile = OnboardingPersistence.load() ?? .default
         self.consent = consentSync.load() ?? Persistence.loadConsent()
-        self.hasOnboarded = Persistence.hasOnboarded
+        self.hasOnboarded = UserDefaults.standard.bool(forKey: OnboardingPersistence.completedKey)
         let saved = Persistence.loadSession()
         self.session = (saved?.dayKey == ActivitySession.key(for: Date())) ? saved! : .fresh(for: Date())
 
@@ -94,8 +93,8 @@ final class AppModel {
 
     // MARK: Derived
 
-    var todayActivity: StepActivity? {
-        StepActivity.activity(for: now, from: profile.activities, offset: session.activityOffset)
+    var todayActivity: SuggestedActivity? {
+        SuggestedActivity.activity(for: now, from: profile.activities, offset: session.activityOffset)
     }
 
     var currentSteps: Int { snapshot.todayTotal }
@@ -250,7 +249,9 @@ final class AppModel {
         recompute(forceInsight: true)
     }
 
-    func completeOnboarding() {
+    /// Called when the onboarding flow finishes: load what it saved and start the daily reminder.
+    func onboardingCompleted() {
+        profile = OnboardingPersistence.load() ?? .default
         hasOnboarded = true
         Task {
             if profile.reminder.isEnabled { await scheduler.requestAuthorization() }
@@ -304,11 +305,12 @@ final class AppModel {
         Task { await refresh(forceInsight: true) }
     }
 
+    /// Sends the user back through onboarding (Settings › Developer).
     func resetOnboarding() {
         Persistence.reset()
-        profile = UserProfile()
         consent = ConsentSettings()
         session = .fresh(for: Date())
         hasOnboarded = false
+        UserDefaults.standard.set(false, forKey: OnboardingPersistence.completedKey)
     }
 }

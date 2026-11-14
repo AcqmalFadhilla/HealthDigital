@@ -50,13 +50,13 @@ private struct GoalSettings: View {
         @Bindable var model = model
         Form {
             Picker("Activity level", selection: $model.profile.activityLevel) {
-                ForEach(ActivityLevel.allCases) { Text($0.label).tag($0) }
+                ForEach(ActivityLevel.allCases) { Text($0.title).tag($0) }
             }
             LabeledContent("Daily goal") {
                 GoalStepper(goal: $model.profile.dailyGoal)
             }
-            Button("Use suggested goal (\(model.profile.activityLevel.suggestedGoal.grouped))") {
-                model.profile.dailyGoal = model.profile.activityLevel.suggestedGoal
+            Button("Use recommended goal for your age and activity (\(model.profile.recommendedGoal.grouped))") {
+                model.profile.dailyGoal = model.profile.recommendedGoal
             }
             Section("What drives you") {
                 MotivationChips(selection: $model.profile.motivations)
@@ -92,26 +92,25 @@ private struct ReminderSettingsView: View {
     var body: some View {
         @Bindable var model = model
         Form {
-            Toggle("Step reminder", isOn: $model.profile.reminder.isEnabled)
+            Toggle("Step reminder", isOn: $model.profile.reminderEnabled)
             Group {
                 LabeledContent("Remind me at") {
-                    ReminderTimeStepper(minutes: $model.profile.reminder.minutesAfterMidnight)
+                    ReminderTimeStepper(minutes: $model.profile.reminderMinutes)
                 }
                 LabeledContent("Active on") {
-                    WeekdayPicker(selection: $model.profile.reminder.activeWeekdays)
+                    WeekdayPicker(selection: $model.profile.reminderDays)
                 }
             }
-            .disabled(!model.profile.reminder.isEnabled)
+            .disabled(!model.profile.reminderEnabled)
             Text(summary).font(.caption).foregroundStyle(.secondary)
         }
         .formStyle(.grouped)
     }
 
     private var summary: String {
-        let r = model.profile.reminder
-        guard r.isEnabled else { return "Reminders are off. Step Hub still tracks your steps." }
-        let names = [2, 3, 4, 5, 6, 7, 1].filter(r.activeWeekdays.contains).map { Calendar.current.shortWeekdaySymbols[$0 - 1] }
-        return names.isEmpty ? "Pick at least one day." : "One reminder at \(r.timeLabel) on \(names.joined(separator: ", "))."
+        let p = model.profile
+        guard p.reminderEnabled else { return "Reminders are off. Step Hub still tracks your steps." }
+        return p.reminderDays.isEmpty ? "Pick at least one day." : "One reminder at \(p.reminderTimeLabel), \(p.reminderDaysSummary.lowercased())."
     }
 }
 

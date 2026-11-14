@@ -2,7 +2,7 @@
 //  Components.swift
 //  HealthDigital
 //
-//  Controls shared by onboarding and Settings so both always offer the same choices.
+//  Controls used by Settings, offering the same choices as onboarding.
 //
 
 import SwiftUI
@@ -10,15 +10,13 @@ import SwiftUI
 // MARK: - Weekday picker ("Active on")
 
 struct WeekdayPicker: View {
-    @Binding var selection: Set<Int>
-    /// Monday-first order using Calendar weekday numbers (1 = Sunday).
-    private let order = [2, 3, 4, 5, 6, 7, 1]
+    @Binding var selection: Set<Weekday>
 
     var body: some View {
         HStack(spacing: 4) {
-            ForEach(order, id: \.self) { day in
+            ForEach(Weekday.allCases) { day in
                 let on = selection.contains(day)
-                let name = Calendar.current.weekdaySymbols[day - 1]
+                let name = day.shortLabel
                 Button {
                     if on { selection.remove(day) } else { selection.insert(day) }
                 } label: {
@@ -98,7 +96,7 @@ struct MotivationChips: View {
                 Button {
                     if on { selection.remove(m) } else { selection.insert(m) }
                 } label: {
-                    Text(m.label)
+                    Label(m.title, systemImage: m.symbolName)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(Capsule().fill(on ? Color.accentColor.opacity(0.12) : Color.clear))
@@ -114,12 +112,12 @@ struct MotivationChips: View {
 // MARK: - Activity tiles
 
 struct ActivityTiles: View {
-    @Binding var selection: Set<StepActivity>
+    @Binding var selection: Set<SuggestedActivity>
     private let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
 
     var body: some View {
         LazyVGrid(columns: columns, spacing: 10) {
-            ForEach(StepActivity.allCases) { a in
+            ForEach(SuggestedActivity.allCases) { a in
                 let on = selection.contains(a)
                 Button {
                     if on { selection.remove(a) } else { selection.insert(a) }

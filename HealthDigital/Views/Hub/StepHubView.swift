@@ -38,7 +38,7 @@ struct StepHubView: View {
 
                 InsightCard()
 
-                if model.profile.reminder.isEnabled || model.session.phase != .waiting {
+                if model.profile.reminderEnabled || model.session.phase != .waiting {
                     TodayActivityCard()
                 }
             }

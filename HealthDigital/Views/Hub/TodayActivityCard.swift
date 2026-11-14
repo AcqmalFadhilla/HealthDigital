@@ -72,7 +72,7 @@ struct TodayActivityCard: View {
         case .waiting, .notified: return "\(activity.minutes) min · \(activity.estimateLabel)"
         case .inProgress: return "Counting from your Watch — tap Done when you finish"
         case .completed:
-            let next = StepActivity.activity(for: Calendar.current.date(byAdding: .day, value: 1, to: model.now) ?? model.now, from: model.profile.activities)
+            let next = SuggestedActivity.activity(for: Calendar.current.date(byAdding: .day, value: 1, to: model.now) ?? model.now, from: model.profile.activities)
             return next.map { "Tomorrow: \($0.title)" } ?? ""
         }
     }

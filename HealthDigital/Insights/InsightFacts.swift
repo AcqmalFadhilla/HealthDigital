@@ -107,9 +107,9 @@ struct InsightFacts: Equatable {
 
 extension InsightFacts {
     static func make(snapshot: StepSnapshot,
-                     profile: UserProfile,
+                     profile: OnboardingProfile,
                      session: ActivitySession,
-                     activity: StepActivity?,
+                     activity: SuggestedActivity?,
                      activitySteps: Int,
                      range: ChartRange,
                      now: Date,
@@ -184,7 +184,7 @@ extension InsightFacts {
             activityTitle: activity?.title, activityEstimate: activity?.estimatedSteps,
             activityStart: session.startedAt.map { Clock.label($0) }, activitySteps: activitySteps,
             weekGoalDays: weekGoalDays, weekDaysCounted: lastWeek.count, weekAverage: weekAverage,
-            motivations: profile.motivations.sorted { $0.rawValue < $1.rawValue }.map(\.label)
+            motivations: profile.orderedMotivations.map(\.title)
         )
     }
 }

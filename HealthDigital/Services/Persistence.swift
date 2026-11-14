@@ -2,38 +2,30 @@
 //  Persistence.swift
 //  HealthDigital
 //
-//  Small, local-only storage. Nothing here leaves the Mac.
+//  Small, local-only storage for Step Hub state. The user's profile is stored by
+//  OnboardingPersistence (Onboarding/OnboardingProfile.swift). Nothing here leaves the Mac.
 //
 
 import Foundation
 
 enum Persistence {
     private enum Key {
-        static let profile = "profile.v1"
         static let consent = "consent.v1"
-        static let onboarded = "onboarded.v1"
         static let session = "session.v1"
     }
 
     private static let defaults = UserDefaults.standard
 
-    static func loadProfile() -> UserProfile { load(Key.profile) ?? UserProfile() }
-    static func save(_ profile: UserProfile) { save(profile, Key.profile) }
-
+    /// Local cache of the consent given on Apple Watch.
     static func loadConsent() -> ConsentSettings { load(Key.consent) ?? ConsentSettings() }
     static func save(_ consent: ConsentSettings) { save(consent, Key.consent) }
 
     static func loadSession() -> ActivitySession? { load(Key.session) }
     static func save(_ session: ActivitySession) { save(session, Key.session) }
 
-    static var hasOnboarded: Bool {
-        get { defaults.bool(forKey: Key.onboarded) }
-        set { defaults.set(newValue, forKey: Key.onboarded) }
-    }
-
-    /// Clears everything, used by "Reset onboarding" in Settings › Developer.
+    /// Clears Step Hub state, used by "Reset onboarding" in Settings › Developer.
     static func reset() {
-        [Key.profile, Key.consent, Key.onboarded, Key.session].forEach(defaults.removeObject(forKey:))
+        [Key.consent, Key.session].forEach(defaults.removeObject(forKey:))
     }
 
     private static func load<T: Decodable>(_ key: String) -> T? {
