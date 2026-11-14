@@ -21,7 +21,9 @@ struct ExplanationSheet: View {
                 Label(insight.source == .onDeviceModel ? "Summary · generated on this Mac" : "Summary · template", systemImage: insight.source == .onDeviceModel ? "sparkles" : "text.alignleft")
                     .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                 Text(insight.title).font(.headline)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(insight.body).font(.callout)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -57,6 +59,7 @@ struct ExplanationSheet: View {
             }
 
             Text(footer).font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
 
             HStack {
                 SettingsLink { Text("Privacy Settings…") }

@@ -174,7 +174,11 @@ final class AppModel {
             insight = generator.template(for: facts, reason: allowAI ? "Writing with Apple Intelligence…" : "On-device insights are off on your Apple Watch")
             insightTask?.cancel()
             guard allowAI, facts.hasData, facts.phase != .inProgress else {
-                if allowAI, let reason = generator.modelUnavailableReason { insight = generator.template(for: facts, reason: reason) }
+                if allowAI, let reason = generator.modelUnavailableReason {
+                    insight = generator.template(for: facts, reason: reason)
+                } else if allowAI, facts.phase == .inProgress {
+                    insight = generator.template(for: facts, reason: "Live numbers while you move; rewritten when you tap Done")
+                }
                 isWritingInsight = false
                 return
             }

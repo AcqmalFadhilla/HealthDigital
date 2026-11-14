@@ -97,8 +97,10 @@ final class InsightGenerator {
             remaining = remaining.replacingOccurrences(of: time, with: " ")
         }
         let allowed = facts.allowedNumbers
-        for match in remaining.matches(of: /\d{1,3}(?:,\d{3})+|\d+/) {
-            guard let value = Int(match.output.replacingOccurrences(of: ",", with: "")) else { return false }
+        // Grouping separator depends on locale: "5,580" (en) or "5.580" (id).
+        for match in remaining.matches(of: /\d{1,3}(?:[.,\u{00A0}\u{202F}]\d{3})+|\d+/) {
+            let digits = match.output.filter(\.isNumber)
+            guard let value = Int(digits) else { return false }
             if value <= 3 { continue } // "one walk", "2 floors" style words are harmless
             if !allowed.contains(value) { return false }
         }
